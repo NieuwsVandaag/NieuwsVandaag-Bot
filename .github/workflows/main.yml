@@ -25,7 +25,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-<<<<<<< HEAD
     - name: Debug info
       run: |
         echo "Python version:"
@@ -35,15 +34,8 @@ jobs:
         echo "Installed packages:"
         pip list
 
-=======
->>>>>>> 917e61c075d2e3cf3456d99474ca2981f48e8900
     - name: Run script
       run: |
         python news_bot.py
       env:
         TELEGRAM_API_TOKEN: ${{ secrets.TELEGRAM_API_TOKEN }}
-
-    - name: Check for errors
-      if: failure()
-      run: |
-        echo "An error occurred. Please check the logs for more details."
