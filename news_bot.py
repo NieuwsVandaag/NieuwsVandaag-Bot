@@ -1,5 +1,6 @@
 import feedparser
-from telegram import Bot, TelegramError
+from telegram import Bot
+from telegram.error import TelegramError
 import asyncio
 import os
 
