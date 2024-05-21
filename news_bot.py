@@ -25,9 +25,11 @@ async def fetch_news():
     for feed_url in RSS_FEEDS:
         feed = feedparser.parse(feed_url)
         for entry in feed.entries:
-            if any(keyword.lower() in entry.title.lower() or keyword.lower() in entry.description.lower() for keyword in KEYWORDS):
+            title = entry.title if 'title' in entry else ''
+            description = entry.description if 'description' in entry else ''
+            if any(keyword.lower() in title.lower() or keyword.lower() in description.lower() for keyword in KEYWORDS):
                 articles.append({
-                    'title': entry.title,
+                    'title': title,
                     'link': entry.link,
                     'published': entry.published
                 })
