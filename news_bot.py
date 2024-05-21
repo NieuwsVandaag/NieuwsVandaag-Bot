@@ -8,11 +8,11 @@ import json
 
 # Configuraties
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
-CHANNEL_ID = '-100XXXXXXXXXX'  # Vervang door de chat-ID van je kanaal
+CHANNEL_ID = '-1002013585609'  # Vervang door de chat-ID van je kanaal
 RSS_FEEDS = [
-    'https://news.bitcoin.com/feed/',
-    'https://cointelegraph.com/rss',
-    'https://www.coindesk.com/arc/outboundfeeds/rss/'
+    'https://www.nu.nl/rss/Algemeen',
+    'https://feeds.nos.nl/nosnieuwsalgemeen',
+    'https://www.ad.nl/rss.xml'
 ]
 POSTED_ARTICLES_FILE = 'posted_articles.json'
 
@@ -50,7 +50,7 @@ async def fetch_news(posted_articles):
                     articles.append({
                         'title': title,
                         'link': entry.link,
-                        'published': entry.published
+                        'published': entry.published if 'published' in entry else ''
                     })
                 else:
                     logger.debug(f"Article already posted: {title}")
