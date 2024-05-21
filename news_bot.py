@@ -10,7 +10,7 @@ import json
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
 CHANNEL_ID = '-1002013585609'  # Vervang door de chat-ID van je kanaal
 RSS_FEEDS = [
-    'https://www.nu.nl/rss',
+    'https://www.nu.nl/rss/Algemeen',  # Algemeen
     'https://feeds.nos.nl/nosnieuwsalgemeen',
     'https://www.ad.nl/rss.xml'
 ]
@@ -20,7 +20,7 @@ POSTED_ARTICLES_FILE = 'posted_articles.json'
 logging.basicConfig(level=logging.DEBUG)  # Verhoog het log level naar DEBUG
 logger = logging.getLogger(__name__)
 
-KEYWORDS = ['technologie', 'politiek', 'sport']  # Voeg hier je trefwoorden toe
+EXCLUDE_KEYWORDS = ['sport']  # Voeg hier je trefwoorden toe die je wilt uitsluiten
 
 def load_posted_articles():
     if os.path.exists(POSTED_ARTICLES_FILE):
@@ -41,7 +41,7 @@ async def fetch_news(posted_articles):
             title = entry.title if 'title' in entry else ''
             description = entry.description if 'description' in entry else ''
             logger.debug(f"Processing entry: {title}")
-            if any(keyword.lower() in title.lower() or keyword.lower() in description.lower() for keyword in KEYWORDS):
+            if not any(keyword.lower() in title.lower() or keyword.lower() in description.lower() for keyword in EXCLUDE_KEYWORDS):
                 if entry.link not in posted_articles:
                     articles.append({
                         'title': title,
