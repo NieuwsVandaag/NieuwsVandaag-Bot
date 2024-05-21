@@ -8,11 +8,11 @@ import json
 
 # Configuraties
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
-CHANNEL_ID = '-1002013585609'  # Vervang door de chat-ID van je kanaal
+CHANNEL_ID = '-100XXXXXXXXXX'  # Vervang door de chat-ID van je kanaal
 RSS_FEEDS = [
-    'https://www.nu.nl/rss/Algemeen',  # Algemeen
-    'https://feeds.nos.nl/nosnieuwsalgemeen',
-    'https://www.ad.nl/rss.xml'
+    'https://news.bitcoin.com/feed/',
+    'https://cointelegraph.com/rss',
+    'https://www.coindesk.com/arc/outboundfeeds/rss/'
 ]
 POSTED_ARTICLES_FILE = 'posted_articles.json'
 
@@ -24,8 +24,12 @@ EXCLUDE_KEYWORDS = ['sport']  # Voeg hier je trefwoorden toe die je wilt uitslui
 
 def load_posted_articles():
     if os.path.exists(POSTED_ARTICLES_FILE):
-        with open(POSTED_ARTICLES_FILE, 'r') as file:
-            return json.load(file)
+        try:
+            with open(POSTED_ARTICLES_FILE, 'r') as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            logger.error(f"Error decoding JSON from {POSTED_ARTICLES_FILE}, initializing empty list.")
+            return []
     return []
 
 def save_posted_articles(posted_articles):
