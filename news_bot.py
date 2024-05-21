@@ -17,7 +17,7 @@ RSS_FEEDS = [
 POSTED_ARTICLES_FILE = 'posted_articles.json'
 
 # Logging instellen
-logging.basicConfig(level=logging.DEBUG)  # Verhoog het log level naar DEBUG
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 EXCLUDE_KEYWORDS = ['sport']  # Voeg hier je trefwoorden toe die je wilt uitsluiten
@@ -44,13 +44,18 @@ async def fetch_news(posted_articles):
         for entry in feed.entries:
             title = entry.title if 'title' in entry else ''
             description = entry.description if 'description' in entry else ''
+            link = entry.link if 'link' in entry else ''
+            published = entry.published if 'published' in entry else ''
+            identifier = f"{title}_{link}"  # Combineer titel en link om een unieke identifier te maken
+
             logger.debug(f"Processing entry: {title}")
             if not any(keyword.lower() in title.lower() or keyword.lower() in description.lower() for keyword in EXCLUDE_KEYWORDS):
-                if entry.link not in posted_articles:
+                if identifier not in posted_articles:
                     articles.append({
                         'title': title,
-                        'link': entry.link,
-                        'published': entry.published if 'published' in entry else ''
+                        'link': link,
+                        'published': published,
+                        'identifier': identifier
                     })
                 else:
                     logger.debug(f"Article already posted: {title}")
@@ -63,7 +68,7 @@ async def send_news(bot, articles, posted_articles):
         try:
             await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
             logger.info(f"Sent article: {article['title']}")
-            posted_articles.append(article['link'])
+            posted_articles.append(article['identifier'])
             save_posted_articles(posted_articles)
             await asyncio.sleep(1)  # Voorkom te veel verzoeken in korte tijd
         except TelegramError as e:
