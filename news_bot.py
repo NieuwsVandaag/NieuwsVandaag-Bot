@@ -4,6 +4,7 @@ from telegram.error import TelegramError
 import asyncio
 import os
 import logging
+import json
 
 # Configuraties
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
@@ -13,6 +14,7 @@ RSS_FEEDS = [
     'https://feeds.nos.nl/nosnieuwsalgemeen',
     'https://www.ad.nl/rss.xml'
 ]
+POSTED_ARTICLES_FILE = 'posted_articles.json'
 
 # Logging instellen
 logging.basicConfig(level=logging.INFO)
@@ -20,28 +22,43 @@ logger = logging.getLogger(__name__)
 
 KEYWORDS = ['technologie', 'politiek', 'sport']  # Voeg hier je trefwoorden toe
 
-async def fetch_news():
+def load_posted_articles():
+    if os.path.exists(POSTED_ARTICLES_FILE):
+        with open(POSTED_ARTICLES_FILE, 'r') as file:
+            return json.load(file)
+    return []
+
+def save_posted_articles(posted_articles):
+    with open(POSTED_ARTICLES_FILE, 'w') as file:
+        json.dump(posted_articles, file)
+
+async def fetch_news(posted_articles):
     articles = []
     for feed_url in RSS_FEEDS:
+        logger.debug(f"Fetching feed: {feed_url}")
         feed = feedparser.parse(feed_url)
         for entry in feed.entries:
             title = entry.title if 'title' in entry else ''
             description = entry.description if 'description' in entry else ''
+            logger.debug(f"Processing entry: {title}")
             if any(keyword.lower() in title.lower() or keyword.lower() in description.lower() for keyword in KEYWORDS):
-                articles.append({
-                    'title': title,
-                    'link': entry.link,
-                    'published': entry.published
-                })
-    logger.info(f"Fetched {len(articles)} articles")
+                if entry.link not in posted_articles:
+                    articles.append({
+                        'title': title,
+                        'link': entry.link,
+                        'published': entry.published
+                    })
+    logger.info(f"Fetched {len(articles)} new articles")
     return articles
 
-async def send_news(bot, articles):
+async def send_news(bot, articles, posted_articles):
     for article in articles:
-        message = f"**{article['title']}**\n{article['link']}\n_Gepubliceerd op: {article['published']}_"
+        message = f"**[{article['title']}]({article['link']})**"
         try:
             await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
             logger.info(f"Sent article: {article['title']}")
+            posted_articles.append(article['link'])
+            save_posted_articles(posted_articles)
             await asyncio.sleep(1)  # Voorkom te veel verzoeken in korte tijd
         except TelegramError as e:
             logger.error(f"Failed to send message: {e}")
@@ -50,10 +67,11 @@ async def main():
     try:
         logger.info("Starting script...")
         bot = Bot(token=API_TOKEN)
+        posted_articles = load_posted_articles()
         logger.info("Fetching news...")
-        articles = await fetch_news()
+        articles = await fetch_news(posted_articles)
         logger.info("Sending news...")
-        await send_news(bot, articles)
+        await send_news(bot, articles, posted_articles)
         logger.info("Script finished successfully.")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
