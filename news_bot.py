@@ -17,7 +17,7 @@ RSS_FEEDS = [
 POSTED_ARTICLES_FILE = 'posted_articles.json'
 
 # Logging instellen
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)  # Verhoog het log level naar DEBUG
 logger = logging.getLogger(__name__)
 
 KEYWORDS = ['technologie', 'politiek', 'sport']  # Voeg hier je trefwoorden toe
@@ -48,6 +48,8 @@ async def fetch_news(posted_articles):
                         'link': entry.link,
                         'published': entry.published
                     })
+                else:
+                    logger.debug(f"Article already posted: {title}")
     logger.info(f"Fetched {len(articles)} new articles")
     return articles
 
