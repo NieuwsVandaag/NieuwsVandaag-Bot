@@ -33,8 +33,10 @@ def load_posted_articles():
     return []
 
 def save_posted_articles(posted_articles):
+    logger.debug(f"Saving posted articles: {posted_articles}")
     with open(POSTED_ARTICLES_FILE, 'w') as file:
         json.dump(posted_articles, file)
+        logger.debug(f"Successfully saved posted articles to {POSTED_ARTICLES_FILE}")
 
 async def fetch_news(posted_articles):
     articles = []
@@ -79,6 +81,7 @@ async def main():
         logger.info("Starting script...")
         bot = Bot(token=API_TOKEN)
         posted_articles = load_posted_articles()
+        logger.info(f"Loaded posted articles: {posted_articles}")
         logger.info("Fetching news...")
         articles = await fetch_news(posted_articles)
         logger.info("Sending news...")
