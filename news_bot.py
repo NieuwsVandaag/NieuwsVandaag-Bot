@@ -5,6 +5,7 @@ import asyncio
 import os
 import logging
 import json
+import shutil
 
 # Configuraties
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
@@ -15,6 +16,7 @@ RSS_FEEDS = [
     'https://www.ad.nl/rss.xml'
 ]
 POSTED_ARTICLES_FILE = 'posted_articles.json'
+POSTED_ARTICLES_BACKUP = 'posted_articles_backup.json'
 
 # Logging instellen
 logging.basicConfig(level=logging.DEBUG)
@@ -37,6 +39,9 @@ def save_posted_articles(posted_articles):
     with open(POSTED_ARTICLES_FILE, 'w') as file:
         json.dump(posted_articles, file)
         logger.debug(f"Successfully saved posted articles to {POSTED_ARTICLES_FILE}")
+    # Maak een back-up
+    shutil.copyfile(POSTED_ARTICLES_FILE, POSTED_ARTICLES_BACKUP)
+    logger.debug(f"Backup of posted articles saved to {POSTED_ARTICLES_BACKUP}")
 
 async def fetch_news(posted_articles):
     articles = []
