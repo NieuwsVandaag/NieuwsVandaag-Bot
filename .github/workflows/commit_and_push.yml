@@ -34,8 +34,9 @@ jobs:
         run: |
           git config --global user.email "your-email@example.com"
           git config --global user.name "GitHub Actions"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}
           git add posted_articles.json posted_articles_backup.json
           git commit -m "Update posted articles"
-          git push
+          git push origin main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
