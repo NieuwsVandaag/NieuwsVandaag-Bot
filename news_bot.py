@@ -22,7 +22,7 @@ POSTED_ARTICLES_BACKUP = 'posted_articles_backup.json'
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-EXCLUDE_KEYWORDS = ['sport']  # Voeg hier je trefwoorden toe die je wilt uitsluiten
+EXCLUDE_KEYWORDS = ['sport', 'voetbal', 'judo', 'schaatsen', 'formula 1', 'f1', 'tennis', 'basketbal', 'hockey', 'wielrennen']  # Voeg hier je trefwoorden toe die je wilt uitsluiten
 
 def load_posted_articles():
     if os.path.exists(POSTED_ARTICLES_FILE):
@@ -36,12 +36,15 @@ def load_posted_articles():
 
 def save_posted_articles(posted_articles):
     logger.debug(f"Saving posted articles: {posted_articles}")
-    with open(POSTED_ARTICLES_FILE, 'w') as file:
-        json.dump(posted_articles, file)
-        logger.debug(f"Successfully saved posted articles to {POSTED_ARTICLES_FILE}")
-    # Maak een back-up
-    shutil.copyfile(POSTED_ARTICLES_FILE, POSTED_ARTICLES_BACKUP)
-    logger.debug(f"Backup of posted articles saved to {POSTED_ARTICLES_BACKUP}")
+    try:
+        with open(POSTED_ARTICLES_FILE, 'w') as file:
+            json.dump(posted_articles, file)
+            logger.debug(f"Successfully saved posted articles to {POSTED_ARTICLES_FILE}")
+        # Maak een back-up
+        shutil.copyfile(POSTED_ARTICLES_FILE, POSTED_ARTICLES_BACKUP)
+        logger.debug(f"Backup of posted articles saved to {POSTED_ARTICLES_BACKUP}")
+    except Exception as e:
+        logger.error(f"Failed to save posted articles: {e}")
 
 async def fetch_news(posted_articles):
     articles = []
@@ -66,6 +69,8 @@ async def fetch_news(posted_articles):
                     })
                 else:
                     logger.debug(f"Article already posted: {title}")
+            else:
+                logger.debug(f"Article excluded due to keyword match: {title}")
     logger.info(f"Fetched {len(articles)} new articles")
     return articles
 
