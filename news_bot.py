@@ -5,7 +5,6 @@ import asyncio
 import os
 import logging
 import json
-import shutil
 
 # Configuraties
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
@@ -16,13 +15,13 @@ RSS_FEEDS = [
     'https://www.ad.nl/rss.xml'
 ]
 POSTED_ARTICLES_FILE = 'posted_articles.json'
-POSTED_ARTICLES_BACKUP = 'posted_articles_backup.json'
+BACKUP_FILE = 'posted_articles_backup.json'
 
 # Logging instellen
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)  # Verhoog het log level naar DEBUG
 logger = logging.getLogger(__name__)
 
-EXCLUDE_KEYWORDS = ['sport', 'voetbal', 'judo', 'schaatsen', 'formula 1', 'f1', 'tennis', 'basketbal', 'hockey', 'wielrennen']  # Voeg hier je trefwoorden toe die je wilt uitsluiten
+EXCLUDE_KEYWORDS = ['sport', 'voetbal', 'judo', 'schaatsen', 'formule 1', 'darts']  # Voeg hier je trefwoorden toe die je wilt uitsluiten
 
 def load_posted_articles():
     if os.path.exists(POSTED_ARTICLES_FILE):
@@ -35,16 +34,12 @@ def load_posted_articles():
     return []
 
 def save_posted_articles(posted_articles):
-    logger.debug(f"Saving posted articles: {posted_articles}")
-    try:
-        with open(POSTED_ARTICLES_FILE, 'w') as file:
-            json.dump(posted_articles, file)
-            logger.debug(f"Successfully saved posted articles to {POSTED_ARTICLES_FILE}")
-        # Maak een back-up
-        shutil.copyfile(POSTED_ARTICLES_FILE, POSTED_ARTICLES_BACKUP)
-        logger.debug(f"Backup of posted articles saved to {POSTED_ARTICLES_BACKUP}")
-    except Exception as e:
-        logger.error(f"Failed to save posted articles: {e}")
+    with open(POSTED_ARTICLES_FILE, 'w') as file:
+        json.dump(posted_articles, file)
+    # Maak een backup
+    with open(BACKUP_FILE, 'w') as backup_file:
+        json.dump(posted_articles, backup_file)
+    logger.debug(f"Backup of posted articles saved to {BACKUP_FILE}")
 
 async def fetch_news(posted_articles):
     articles = []
@@ -55,22 +50,16 @@ async def fetch_news(posted_articles):
             title = entry.title if 'title' in entry else ''
             description = entry.description if 'description' in entry else ''
             link = entry.link if 'link' in entry else ''
-            published = entry.published if 'published' in entry else ''
-            identifier = f"{title}_{link}"  # Combineer titel en link om een unieke identifier te maken
-
             logger.debug(f"Processing entry: {title}")
             if not any(keyword.lower() in title.lower() or keyword.lower() in description.lower() for keyword in EXCLUDE_KEYWORDS):
-                if identifier not in posted_articles:
+                if link not in posted_articles:
                     articles.append({
                         'title': title,
                         'link': link,
-                        'published': published,
-                        'identifier': identifier
+                        'published': entry.published if 'published' in entry else ''
                     })
                 else:
                     logger.debug(f"Article already posted: {title}")
-            else:
-                logger.debug(f"Article excluded due to keyword match: {title}")
     logger.info(f"Fetched {len(articles)} new articles")
     return articles
 
@@ -80,7 +69,7 @@ async def send_news(bot, articles, posted_articles):
         try:
             await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
             logger.info(f"Sent article: {article['title']}")
-            posted_articles.append(article['identifier'])
+            posted_articles.append(article['link'])
             save_posted_articles(posted_articles)
             await asyncio.sleep(1)  # Voorkom te veel verzoeken in korte tijd
         except TelegramError as e:
@@ -91,7 +80,6 @@ async def main():
         logger.info("Starting script...")
         bot = Bot(token=API_TOKEN)
         posted_articles = load_posted_articles()
-        logger.info(f"Loaded posted articles: {posted_articles}")
         logger.info("Fetching news...")
         articles = await fetch_news(posted_articles)
         logger.info("Sending news...")
