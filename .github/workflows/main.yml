@@ -1,11 +1,12 @@
 name: Update posted articles
 
-on:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: '0 * * * *'
+# Commentarieer de triggers
+# on:
+#   push:
+#     branches:
+#       - main
+#   schedule:
+#     - cron: '0 * * * *'
 
 jobs:
   update-posted-articles:
@@ -25,6 +26,8 @@ jobs:
 
       - name: Run script
         run: python news_bot.py
+        env:
+          TELEGRAM_API_TOKEN: ${{ secrets.TELEGRAM_API_TOKEN }}
 
       - name: Check for changes
         run: git status
